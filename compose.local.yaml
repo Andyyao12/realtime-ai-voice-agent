@@ -1,0 +1,21 @@
+services:
+  web:
+    environment:
+      PUBLIC_LIVEKIT_URL: ws://localhost:7880
+    ports:
+      - "3000:3000"
+
+  business-api:
+    ports:
+      - "8000:8000"
+
+  agent:
+    environment:
+      PUBLIC_LIVEKIT_URL: ws://livekit:7880
+      SHOWCASE_AVATAR_ENABLED: "false"
+
+  livekit:
+    volumes:
+      - ./deploy/livekit.local.yaml:/etc/livekit.yaml:ro
+    ports:
+      - "7880:7880"

@@ -1,0 +1,19 @@
+FROM python:3.12.11-slim AS runtime
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+RUN groupadd --gid 10001 showcase \
+    && useradd --uid 10001 --gid showcase --create-home showcase
+
+WORKDIR /app
+COPY pyproject.toml README.md ./
+COPY src ./src
+COPY knowledge ./knowledge
+RUN python -m pip install --no-cache-dir .
+
+RUN mkdir -p /data && chown -R showcase:showcase /app /data
+USER showcase
+
+CMD ["python", "-m", "voice_agent.entrypoint", "start"]

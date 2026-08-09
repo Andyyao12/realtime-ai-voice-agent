@@ -1,0 +1,121 @@
+name: realtime-ai-voice-agent
+
+services:
+  web:
+    build:
+      context: ./web
+    restart: unless-stopped
+    environment:
+      LIVEKIT_API_KEY: ${LIVEKIT_API_KEY:?set LIVEKIT_API_KEY}
+      LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET:?set LIVEKIT_API_SECRET}
+      PUBLIC_LIVEKIT_URL: wss://${LIVEKIT_DOMAIN:?set LIVEKIT_DOMAIN}
+      AGENT_NAME: ${AGENT_NAME:-showcase-voice-agent}
+      AGENT_HEALTH_PORT: ${AGENT_HEALTH_PORT:-8081}
+      OPENAI_HTTP_PROXY: ${OPENAI_HTTP_PROXY:-}
+      SHOWCASE_ACCESS_CODE: ${SHOWCASE_ACCESS_CODE:-}
+    expose:
+      - "3000"
+    depends_on:
+      livekit:
+        condition: service_started
+    networks:
+      - public
+
+  business-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.python
+    command: ["uvicorn", "business_api.app:app", "--host", "0.0.0.0", "--port", "8000"]
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: sqlite:////data/showcase.db
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    expose:
+      - "8000"
+    volumes:
+      - business-data:/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2)"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    networks:
+      - internal
+
+  agent:
+    build:
+      context: .
+      dockerfile: Dockerfile.python
+    command: ["python", "-m", "voice_agent.entrypoint", "start"]
+    restart: unless-stopped
+    environment:
+      LIVEKIT_URL: ws://livekit:7880
+      PUBLIC_LIVEKIT_URL: wss://${LIVEKIT_DOMAIN:?set LIVEKIT_DOMAIN}
+      LIVEKIT_API_KEY: ${LIVEKIT_API_KEY:?set LIVEKIT_API_KEY}
+      LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET:?set LIVEKIT_API_SECRET}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_REALTIME_MODEL: ${OPENAI_REALTIME_MODEL:-gpt-realtime-2.1}
+      ANAM_API_KEY: ${ANAM_API_KEY:-}
+      ANAM_AVATAR_ID: ${ANAM_AVATAR_ID:-}
+      SHOWCASE_AVATAR_ENABLED: ${SHOWCASE_AVATAR_ENABLED:-true}
+      AGENT_NAME: ${AGENT_NAME:-showcase-voice-agent}
+      BUSINESS_API_URL: http://business-api:8000
+      TOOL_TIMEOUT_SECONDS: ${TOOL_TIMEOUT_SECONDS:-5}
+      MODEL_CONNECT_TIMEOUT_SECONDS: ${MODEL_CONNECT_TIMEOUT_SECONDS:-20}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    depends_on:
+      business-api:
+        condition: service_healthy
+      livekit:
+        condition: service_started
+    networks:
+      - internal
+      - public
+
+  livekit:
+    image: livekit/livekit-server:v1.9.7
+    command: ["--config", "/etc/livekit.yaml"]
+    restart: unless-stopped
+    environment:
+      LIVEKIT_KEYS: "${LIVEKIT_API_KEY:?set LIVEKIT_API_KEY}: ${LIVEKIT_API_SECRET:?set LIVEKIT_API_SECRET}"
+    volumes:
+      - ./deploy/livekit.yaml:/etc/livekit.yaml:ro
+    ports:
+      - "7881:7881/tcp"
+      - "50000-50100:50000-50100/udp"
+    expose:
+      - "7880"
+    networks:
+      - public
+
+  caddy:
+    image: caddy:2.10.2-alpine
+    restart: unless-stopped
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:?set APP_DOMAIN}
+      LIVEKIT_DOMAIN: ${LIVEKIT_DOMAIN:?set LIVEKIT_DOMAIN}
+      CADDY_EMAIL: ${CADDY_EMAIL:?set CADDY_EMAIL}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    depends_on:
+      - web
+      - livekit
+    networks:
+      - public
+
+volumes:
+  business-data:
+  caddy-data:
+  caddy-config:
+
+networks:
+  public:
+  internal:
+    internal: true
