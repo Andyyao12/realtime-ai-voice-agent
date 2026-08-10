@@ -23,6 +23,13 @@ REQUIRED_COMMANDS = {
     "corepack pnpm build",
     "docker compose --env-file .env.example config --quiet",
 }
+REQUIRED_STATEMENTS = {
+    "Core realtime voice functionality has been validated.",
+    "Optional Anam avatar integration is included.",
+    "Public RTC avatar-track validation is tracked separately.",
+    "Recorded prototype demo",
+    "docs/AVATAR_VALIDATION.md",
+}
 
 
 def local_links(markdown: str) -> list[str]:
@@ -43,6 +50,9 @@ def main() -> int:
     for command in sorted(REQUIRED_COMMANDS):
         if command not in markdown:
             errors.append(f"missing validation command: {command}")
+    for statement in sorted(REQUIRED_STATEMENTS):
+        if statement not in markdown:
+            errors.append(f"missing release statement: {statement}")
     if markdown.count("```mermaid") != 1:
         errors.append("README must contain exactly one Mermaid architecture block")
     for link in local_links(markdown):

@@ -46,10 +46,10 @@ const PREVIEW_EVENTS: StatusEvent[] = [
     schema_version: 1,
     sequence: 1,
     timestamp: "2026-08-10T00:00:00.000Z",
-    source: "avatar",
-    type: "avatar.ready",
+    source: "model",
+    type: "model.ready",
     status: "ready",
-    label: "Digital human ready",
+    label: "Realtime model ready",
     duration_ms: null,
   },
   {

@@ -1,16 +1,17 @@
 # Realtime AI Voice Agent
 
-A small, runnable reference implementation of a realtime hotel concierge with two-way audio,
-live transcription, a provider-hosted digital human, Markdown knowledge retrieval, and typed
-business tools. The fictional Harborlight Hotel scenario keeps the engineering visible without
-depending on private services or customer data.
+[![CI](https://github.com/Andyyao12/realtime-ai-voice-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/Andyyao12/realtime-ai-voice-agent/actions/workflows/ci.yml)
+
+A production-oriented reference implementation demonstrating how LiveKit/WebRTC realtime voice,
+LLM reasoning, tool calling, Markdown knowledge retrieval, and typed business APIs fit together in
+one runnable AI agent. The fictional Harborlight Hotel scenario keeps the engineering visible
+without depending on private services or customer data.
 
 ![Harborlight Voice Console](docs/media/console-desktop.png)
 
-The screenshot above is a sanitized preview state. [Watch the 72-second local RTC demo](docs/media/demo.mp4)
-or view the short flow below. The recording uses generated fictional speech and no avatar; it proves
-the local voice, transcript, Knowledge, reservation, and service-request path without implying a
-credentialed Anam acceptance result.
+The screenshot above is a sanitized preview state. [Watch the 72-second Public Showcase RTC demo](docs/media/demo.mp4)
+or view the short flow below. The recording uses generated fictional speech and validates the core
+voice, transcript, Knowledge, reservation, service-request, and lifecycle path.
 
 ![Realtime voice flow](docs/media/voice-flow.gif)
 
@@ -26,6 +27,7 @@ model prompts, database access, avatar state, and operational events. This proje
 - A private FastAPI service validates tool inputs and is the only process that reads SQLite.
 - Self-hosted LiveKit carries WebRTC media and the public-safe `showcase.status.v1` data channel.
 - Caddy terminates HTTPS/WSS while media uses explicit TCP/UDP ports.
+- An optional Anam extension can publish a digital-human participant without changing the core path.
 
 ## Architecture
 
@@ -35,7 +37,7 @@ flowchart LR
     B <-->|"WSS signaling + WebRTC media"| L["LiveKit Server"]
     L <-->|"audio, video, data"| A["Python Agent Runtime"]
     A <-->|"Realtime speech + tool calls"| O["OpenAI Realtime"]
-    A <-->|"official avatar plugin"| V["Anam Avatar"]
+    A -.->|"optional official extension"| V["Anam Avatar"]
     A -->|"internal HTTP only"| F["FastAPI Business API"]
     F --> D[("SQLite mock data")]
     A --> K["Markdown Knowledge"]
@@ -48,6 +50,31 @@ only an allowlisted event name, state, label, sequence, timestamp, and optional 
 
 ## Demo
 
+### Release status
+
+- **Core realtime voice functionality has been validated.** The committed recording covers the
+  credentialed local LiveKit, Realtime LLM, Knowledge, Tool, API, transcript, and cleanup path.
+- **Optional Anam avatar integration is included.** It is isolated behind configuration and uses the
+  official LiveKit plugin.
+- **Public RTC avatar-track validation is tracked separately.** See
+  [Avatar validation](docs/AVATAR_VALIDATION.md) for the P0.1 acceptance plan.
+- Do not claim that this public Showcase has completed production-level Avatar validation until the
+  documented public RTC test passes.
+
+### Evidence types
+
+| Evidence | Meaning |
+| --- | --- |
+| Public Showcase implementation | The code, tests, screenshots, GIF, and 72-second recording in this repository |
+| Recorded prototype demo | Footage from the underlying working prototype; when presented, it is historical demonstration evidence rather than clone-and-run proof for this repository |
+| Optional Avatar integration | Included adapter and configuration, with public audio/video track validation pending under P0.1 |
+
+Any external Avatar clip used with this portfolio must be labeled **Recorded prototype demo** or
+**Demo footage from the underlying working prototype**. It must not imply that a default clone can
+immediately reproduce every third-party Avatar behavior.
+
+### Core walkthrough
+
 Use these fictional records:
 
 | Flow | Demo input | Expected behavior |
@@ -57,9 +84,9 @@ Use these fictional records:
 | Reservation | `DEMO-2048`, last name `Morgan` | Returns a confirmed Harbor View King stay |
 | Service request | Two towels after 7 PM | Confirms details, then creates an `SR-...` request |
 
-Suggested recording sequence: connect, confirm the avatar track, ask the breakfast question, ask the
-unknown question, look up the demo reservation, create the towel request, and end the call. Keep the
-final recording between 60 and 75 seconds.
+Suggested recording sequence: connect, confirm two-way voice and transcript, ask the breakfast
+question, ask the unknown question, look up the demo reservation, create the towel request, and end
+the call. Keep the final recording between 60 and 75 seconds.
 
 The sanitized UI-only state is available at `/?preview=1` for screenshots. It is not runtime proof.
 
@@ -109,7 +136,7 @@ file untracked.
 
 ## Full public deployment
 
-Full avatar mode uses two DNS names on one host:
+A public voice deployment uses two DNS names on one host:
 
 - `APP_DOMAIN` routes HTTPS to Next.js.
 - `LIVEKIT_DOMAIN` routes WSS signaling to LiveKit.
@@ -128,6 +155,8 @@ docker compose logs --tail=100 agent livekit caddy
 
 Caddy obtains certificates automatically. Before exposing a paid demo, set a strong
 `SHOWCASE_ACCESS_CODE`, apply host firewall rules, and add external rate limiting at the edge.
+The optional Avatar extension additionally requires the provider to reach the public LiveKit URL;
+its separate acceptance procedure is documented in [Avatar validation](docs/AVATAR_VALIDATION.md).
 
 ## Environment variables
 
@@ -232,6 +261,10 @@ API validation and persistence, tool failure redaction, official avatar construc
 allowlisting, token claims, responsive UI, and container builds. A real RTC acceptance run is a
 separate bounded operation because it incurs provider cost.
 
+Local Docker runtime validation was unavailable on the original development host because no Docker
+Engine was installed. The public GitHub Actions workflow therefore performs both image builds and
+Compose validation before the release is marked Portfolio Ready.
+
 ## Project structure
 
 ```text
@@ -257,7 +290,9 @@ separate bounded operation because it incurs provider cost.
 - Markdown search is deterministic keyword matching, not semantic retrieval.
 - The official avatar plugin is used as provided. This project does not add proprietary stream
   recovery, watchdog, monkey patches, or provider fallbacks.
-- Anam avatar mode cannot be proven on an unpublished localhost URL.
+- Optional Anam validation requires a public LiveKit environment with matching signing credentials;
+  current evidence and the remaining checks are tracked in
+  [Avatar validation](docs/AVATAR_VALIDATION.md).
 - The access code is a cost-control gate, not a replacement for user authentication or rate limits.
 
 ## Troubleshooting
