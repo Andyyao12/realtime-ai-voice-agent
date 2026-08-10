@@ -2,6 +2,8 @@
 
 [![CI](https://github.com/Andyyao12/realtime-ai-voice-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/Andyyao12/realtime-ai-voice-agent/actions/workflows/ci.yml)
 
+**Release status: Portfolio Ready (`v0.1.0`)**
+
 A production-oriented reference implementation demonstrating how LiveKit/WebRTC realtime voice,
 LLM reasoning, tool calling, Markdown knowledge retrieval, and typed business APIs fit together in
 one runnable AI agent. The fictional Harborlight Hotel scenario keeps the engineering visible
