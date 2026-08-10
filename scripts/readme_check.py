@@ -28,6 +28,7 @@ REQUIRED_STATEMENTS = {
     "Optional Anam avatar integration is included.",
     "Public RTC avatar-track validation is tracked separately.",
     "Recorded prototype demo",
+    "SHOWCASE_AVATAR_ENABLED=false",
     "docs/AVATAR_VALIDATION.md",
 }
 

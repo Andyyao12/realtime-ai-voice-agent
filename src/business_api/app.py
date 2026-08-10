@@ -37,7 +37,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     app = FastAPI(
         title="Showcase Mock Business API",
-        version="0.1.0",
+        version="0.1.1",
         lifespan=lifespan,
     )
 

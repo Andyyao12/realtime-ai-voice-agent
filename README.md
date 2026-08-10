@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/Andyyao12/realtime-ai-voice-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/Andyyao12/realtime-ai-voice-agent/actions/workflows/ci.yml)
 
-**Release status: Portfolio Ready (`v0.1.0`)**
+**Release status: Portfolio Ready (`v0.1.1`)**
 
 A production-oriented reference implementation demonstrating how LiveKit/WebRTC realtime voice,
 LLM reasoning, tool calling, Markdown knowledge retrieval, and typed business APIs fit together in
@@ -147,7 +147,9 @@ Point both A/AAAA records at the server. Open TCP `80`, `443`, `7881`; UDP `443`
 `50000-50100`. Do not proxy the WebRTC media ports through an HTTP CDN. If the host is behind NAT,
 forward the same ports and confirm that LiveKit advertises the public address.
 
-Set every non-placeholder value in `.env`, including `ANAM_AVATAR_ID`, then run:
+Set every non-placeholder core value in `.env`. Keep `SHOWCASE_AVATAR_ENABLED=false` for the Core
+Release. To opt into P0.1, also set `ANAM_API_KEY` and `ANAM_AVATAR_ID`, then change the flag to
+`true`. Start the stack with:
 
 ```bash
 docker compose up --build -d
@@ -176,7 +178,7 @@ its separate acceptance procedure is documented in [Avatar validation](docs/AVAT
 | `ANAM_API_KEY` | Agent | Avatar provider credential |
 | `ANAM_AVATAR_ID` | Agent | Avatar identifier required by the official plugin |
 | `ANAM_PERSONA_ID` | None | Optional account-side note; not used by runtime |
-| `SHOWCASE_AVATAR_ENABLED` | Agent | Disable avatar for local and CI checks |
+| `SHOWCASE_AVATAR_ENABLED` | Agent | Opt into the Avatar extension; defaults to `false` |
 | `BUSINESS_API_URL` | Agent | Internal FastAPI base URL |
 | `DATABASE_URL` | Business API | SQLite URL; Compose stores it in a named volume |
 | `TOOL_TIMEOUT_SECONDS` | Agent | Bounded internal HTTP timeout, 1-30 seconds |

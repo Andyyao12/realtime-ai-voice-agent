@@ -28,7 +28,7 @@ class Settings(BaseSettings):
 
     anam_api_key: str = ""
     anam_avatar_id: str = ""
-    showcase_avatar_enabled: bool = True
+    showcase_avatar_enabled: bool = False
 
     business_api_url: str = "http://localhost:8000"
     database_url: str = "sqlite:///./data/showcase.db"

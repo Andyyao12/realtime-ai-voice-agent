@@ -21,6 +21,13 @@ def test_avatar_can_be_disabled_for_credential_free_ci() -> None:
     assert entrypoint.build_avatar_session(settings) is None
 
 
+def test_avatar_is_opt_in_by_default() -> None:
+    settings = Settings(_env_file=None)
+
+    assert settings.showcase_avatar_enabled is False
+    assert entrypoint.build_avatar_session(settings) is None
+
+
 def test_model_connect_timeout_is_bounded() -> None:
     with pytest.raises(ValueError):
         Settings(_env_file=None, model_connect_timeout_seconds=61)
