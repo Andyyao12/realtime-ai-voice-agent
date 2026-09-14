@@ -2,34 +2,27 @@
 
 [![CI](https://github.com/Andyyao12/realtime-ai-voice-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/Andyyao12/realtime-ai-voice-agent/actions/workflows/ci.yml)
 
-**Release status: Portfolio Ready (`v0.1.1`)**
+**A realtime, tool-calling voice agent you can actually run.** Browser voice over LiveKit/WebRTC, a server-side OpenAI Realtime model session, Markdown knowledge retrieval, and three typed business tools behind an internal API. The fictional Harborlight Hotel scenario keeps every engineering boundary visible without private services or customer data.
 
-A production-oriented reference implementation demonstrating how LiveKit/WebRTC realtime voice,
-LLM reasoning, tool calling, Markdown knowledge retrieval, and typed business APIs fit together in
-one runnable AI agent. The fictional Harborlight Hotel scenario keeps the engineering visible
-without depending on private services or customer data.
+> **Realtime AI Agent Series — Part 1: the realtime front line.**
+> Companion repositories: [ai-business-automation](https://github.com/Andyyao12/ai-business-automation) (the reliable action layer) · [production-fastapi-deployment](https://github.com/Andyyao12/production-fastapi-deployment) (the deployment substrate).
 
 ![Harborlight Voice Console](docs/media/console-desktop.png)
 
-The screenshot above is a sanitized preview state. [Watch the 72-second Public Showcase RTC demo](docs/media/demo.mp4)
-or view the short flow below. The recording uses generated fictional speech and validates the core
-voice, transcript, Knowledge, reservation, service-request, and lifecycle path.
+Watch the 72-second sanitized demo: [docs/media/demo.mp4](docs/media/demo.mp4) — or the short session flow below. The recording uses generated fictional speech and validates the core voice, transcript, Knowledge, reservation, service-request, and lifecycle path.
 
 ![Realtime voice flow](docs/media/voice-flow.gif)
 
 [Media rights notice](MEDIA_NOTICE.md)
 
-## Problem and solution
+## Key capabilities
 
-Realtime voice demos often hide critical boundaries inside one process: browser credentials,
-model prompts, database access, avatar state, and operational events. This project separates them:
-
-- Next.js issues short-lived, server-generated LiveKit grants and renders media and status.
-- A Python LiveKit Agent owns the Realtime model session, prompt, tools, and avatar adapter.
-- A private FastAPI service validates tool inputs and is the only process that reads SQLite.
-- Self-hosted LiveKit carries WebRTC media and the public-safe `showcase.status.v1` data channel.
-- Caddy terminates HTTPS/WSS while media uses explicit TCP/UDP ports.
-- An optional Anam extension can publish a digital-human participant without changing the core path.
+- **Realtime two-way voice** — browser ↔ LiveKit WebRTC ↔ Python agent, with live transcript and per-session lifecycle states (`connecting`, `ready`, `closed`).
+- **Server-only model access** — the OpenAI Realtime session, prompt, and credentials never leave the agent process; browsers only receive a ten-minute, random-room participant JWT.
+- **Three validated tools** — `search_knowledge`, `lookup_reservation`, `create_service_request`, each bounded by timeouts, mapped to stable error codes, and observable through an allowlisted telemetry contract.
+- **No-hallucination policy** — knowledge answers carry a source; a no-match returns an explicit refusal instead of a plausible guess. Match and no-match behavior are both covered by CI.
+- **Public-safe status events** — a `showcase.status.v1` data channel with a frozen event allowlist, so session, model, avatar, knowledge, and tool state are observable without ever exposing tool arguments.
+- **Deployable topology** — Docker Compose with Caddy TLS/WSS, explicit RTC media ports, an internal-only business API network, and an optional Anam digital-human extension behind a single flag.
 
 ## Architecture
 
@@ -49,6 +42,17 @@ flowchart LR
 
 The browser never receives provider secrets. The Agent never opens SQLite. Tool telemetry contains
 only an allowlisted event name, state, label, sequence, timestamp, and optional duration.
+
+## Why I built it
+
+I operate a production realtime voice agent deployment, and the interesting engineering is almost
+never visible in demos: what happens when a tool call stalls mid-conversation, when the provider
+session drops, when a user interrupts their own request, or when a model narrates a successful
+outcome that never happened. The production system cannot be published, so I rebuilt its
+architecture from scratch as a small, clean, runnable reference — new prompts, new tools, new
+schemas, and new tests — to show how I think those failure modes should be handled.
+
+**Release status: Portfolio Ready (`v0.1.1`)**
 
 ## Demo
 
@@ -91,6 +95,39 @@ question, ask the unknown question, look up the demo reservation, create the tow
 the call. Keep the final recording between 60 and 75 seconds.
 
 The sanitized UI-only state is available at `/?preview=1` for screenshots. It is not runtime proof.
+
+## Engineering challenges
+
+**Tool latency inside a live conversation.** A stalled HTTP call must never freeze a voice session.
+Every tool execution runs against bounded budgets — connect timeout capped at two seconds, total
+timeout configurable between 1 and 30 seconds via `TOOL_TIMEOUT_SECONDS` — and any failure collapses
+into one stable code (`BUSINESS_SERVICE_UNAVAILABLE`) so the model can tell the guest the front desk
+line is unavailable without ever seeing an HTTP stack trace.
+
+**Preventing invented success.** Voice agents tend to narrate a confident "done!" even when no tool
+ran or nothing matched. Three gate layers: prompt invariants ("Never invent policy, reservation,
+service-request, or tool results", confirm category and summary before creating a request), typed
+tool answers (`matched` with a source / `no_match` / `not_found`) instead of free-form results, and
+CI checks on both knowledge-match and knowledge-no-match behavior.
+
+**Error redaction across the voice channel.** Session errors are logged as error type names only.
+Provider error bodies, request identifiers, and raw tool arguments never reach the logs, the status
+data channel, or the spoken reply.
+
+**Telemetry racing startup.** Tools can emit status events before the agent's data-channel
+participant exists. The publisher buffers events and replays them on activation, so early
+"searching..." states are not lost, and emitting an unknown event name raises immediately instead of
+silently passing.
+
+**Teardown that cannot hang.** Disconnect cleanup drains in-flight status tasks, then closes the
+avatar session, the agent session, and the model HTTP session under hard bounded timeouts: one
+failed resource can never block room cleanup for the guest. Shutdown callbacks are idempotent under
+repeated calls.
+
+**Knowing what not to build.** Turn detection, VAD, and barge-in handling are delegated to the
+OpenAI Realtime pipeline through LiveKit Agents. The engineering effort goes into the seams around
+that pipeline — tool budgets, error surfaces, event ordering, and teardown — which is where
+production incidents actually happened. Turn-taking instrumentation is a roadmap item.
 
 ## Run locally
 
@@ -298,6 +335,17 @@ Compose validation before the release is marked Portfolio Ready.
   current evidence and the remaining checks are tracked in
   [Avatar validation](docs/AVATAR_VALIDATION.md).
 - The access code is a cost-control gate, not a replacement for user authentication or rate limits.
+
+## Roadmap
+
+- **P0.1 avatar validation** — public RTC audio/video track acceptance per
+  [Avatar validation](docs/AVATAR_VALIDATION.md).
+- **Turn-taking instrumentation** — barge-in rate, cut-off speech, and endpointing latency metrics
+  surfaced through the existing telemetry allowlist.
+- **Retrieval upgrade path** — semantic scoring behind the same `search_knowledge` contract, so the
+  agent behavior does not change while retrieval quality improves.
+- **Deployment hardening** — edge rate limiting, key rotation, and cost-gate guidance beyond
+  `SHOWCASE_ACCESS_CODE`.
 
 ## Troubleshooting
 
