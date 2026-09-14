@@ -16,7 +16,7 @@
     "livekit-client": "^2.15.6",
     "jose": "^6.0.13",
     "lucide-react": "^0.468.0",
-    "next": "15.5.21",
+    "next": "15.5.24",
     "react": "19.1.0",
     "react-dom": "19.1.0"
   },
@@ -30,16 +30,16 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "15.5.21",
+    "eslint-config-next": "15.5.24",
     "jsdom": "^25.0.1",
     "typescript": "^5",
     "vite": "^7.3.1",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.11"
   },
   "pnpm": {
     "overrides": {
       "postcss": "8.5.23",
-      "sharp": "0.35.0"
+      "sharp": "0.35.4"
     }
   }
 }
